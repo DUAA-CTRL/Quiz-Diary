@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Diary ♡</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:#f3f3f3;
+    color:#1d1d1d;
+    font-family:"Trebuchet MS",Arial,sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:28px 14px;
+  }
+  .app{
+    width:min(720px,100%);
+    position:relative;
+  }
+  .paper{
+    background:#fff;
+    border:3px solid #1d1d1d;
+    border-radius:8px;
+    padding:55px 48px 42px;
+    position:relative;
+    box-shadow:10px 10px 0 #1d1d1d;
+  }
+  .doodle{position:absolute;font-size:48px;line-height:1}
+  .cat{left:-25px;top:-38px}
+  .star{right:-35px;top:-35px}
+  .cloud{left:45px;bottom:-30px;font-size:42px}
+  .heart{right:-25px;bottom:-32px;font-size:55px}
+  header h1{
+    margin:0;
+    font-size:42px;
+    letter-spacing:-1px;
+    font-weight:900;
+  }
+  header p{
+    color:#777;
+    font-size:20px;
+    margin:8px 0 38px;
+  }
+  .progress{
+    display:flex;
+    gap:10px;
+    margin-bottom:42px;
+  }
+  .dot{
+    height:13px;
+    flex:1;
+    border:2px solid #bbb;
+    border-radius:20px;
+    background:#fff;
+  }
+  .dot.done{background:#1d1d1d;border-color:#1d1d1d}
+  .question-number{font-size:18px;font-weight:800;margin-bottom:12px}
+  .question{
+    font-size:29px;
+    line-height:1.35;
+    margin:0 0 25px;
+    font-weight:900;
+  }
+  .options{display:grid;gap:12px}
+  .option{
+    width:100%;
+    padding:17px 22px;
+    background:#fff;
+    border:3px solid #1d1d1d;
+    border-radius:28px;
+    text-align:left;
+    font-size:20px;
+    font-weight:800;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .option:hover{transform:translateX(4px)}
+  .option.selected{background:#1d1d1d;color:#fff}
+  .option.correct{background:#d9f5df;border-color:#2d8a46;color:#164c25}
+  .option.wrong{background:#ffe0e0;border-color:#d44848;color:#7b2222}
+  .fact{
+    display:none;
+    margin-top:24px;
+    padding:17px 20px;
+    border-radius:18px;
+    background:#f4f4f4;
+    border:2px dashed #777;
+    font-size:17px;
+    line-height:1.5;
+  }
+  .fact.show{display:block}
+  .fact strong{font-size:19px}
+  .next{
+    width:100%;
+    margin-top:22px;
+    padding:18px;
+    border:0;
+    border-radius:28px;
+    background:#1d1d1d;
+    color:#fff;
+    font-size:20px;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .next:disabled{opacity:.35;cursor:not-allowed}
+  .result{text-align:center;display:none}
+  .result h2{font-size:38px;margin:10px 0}
+  .score{font-size:28px;font-weight:900;margin:20px 0}
+  .restart{
+    border:0;background:#1d1d1d;color:#fff;border-radius:28px;
+    padding:16px 35px;font-size:19px;font-weight:900;cursor:pointer;
+  }
+  .tiny{color:#777;margin-top:22px;font-size:14px}
+  @media(max-width:600px){
+    .paper{padding:42px 25px 32px}
+    header h1{font-size:34px}
+    header p{font-size:17px;margin-bottom:30px}
+    .question{font-size:24px}
+    .option{font-size:17px;padding:15px 18px}
+    .cat{left:-13px}.star{right:-18px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="paper">
+    <div class="doodle cat">🐱</div>
+    <div class="doodle star">☆</div>
+    <div class="doodle cloud">☁</div>
+    <div class="doodle heart">♡</div>
+
+    <section id="quiz">
+      <header>
+        <h1>Quiz Diary 🖤</h1>
+        <p>A little brain break — ten quick questions.</p>
+      </header>
+
+      <div class="progress" id="progress"></div>
+
+      <div class="question-number" id="questionNumber"></div>
+      <h2 class="question" id="question"></h2>
+      <div class="options" id="options"></div>
+
+      <div class="fact" id="fact"></div>
+      <button class="next" id="next" disabled>Next question →</button>
+    </section>
+
+    <section class="result" id="result">
+      <div style="font-size:60px">🌍✨</div>
+      <h2>Quiz complete!</h2>
+      <p>You made it through the whole world tour.</p>
+      <div class="score" id="finalScore"></div>
+      <button class="restart" onclick="startQuiz()">Play again ↻</button>
+      <div class="tiny">Different places · Different facts · Same beautiful planet ♡</div>
+    </section>
+  </main>
+</div>
+
+<script>
+const questions = [
+  {
+    q:"Which country has the largest land area in Asia?",
+    options:["China","India","Russia","Kazakhstan"],
+    answer:"Russia",
+    fact:"💡 Fun fact: Russia is the world’s largest country and stretches across both Europe and Asia."
+  },
+  {
+    q:"What is the capital city of South Korea?",
+    options:["Busan","Incheon","Seoul","Daegu"],
+    answer:"Seoul",
+    fact:"💡 Fun fact: Seoul is South Korea’s capital and one of Asia’s major global cities."
+  },
+  {
+    q:"Which mountain is the highest point in South Korea?",
+    options:["Seoraksan","Jirisan","Hallasan","Bukhansan"],
+    answer:"Hallasan",
+    fact:"💡 Fun fact: Hallasan is a volcanic mountain on Jeju Island and rises about 1,947 metres above sea level."
+  },
+  {
+    q:"Which Indian state is home to the world’s largest river island, Majuli?",
+    options:["Assam","West Bengal","Bihar","Odisha"],
+    answer:"Assam",
+    fact:"💡 Fun fact: Majuli is located in the Brahmaputra River in Assam and is famous for its unique culture and Satras."
+  },
+  {
+    q:"Which mountain is the second-highest in the world?",
+    options:["K2","Kangchenjunga","Lhotse","Nanga Parbat"],
+    answer:"K2",
+    fact:"💡 Fun fact: K2 stands at about 8,611 metres and lies on the Pakistan–China border. It is considered one of the world’s most difficult major mountains to climb."
+  },
+  {
+    q:"Which is the longest river in Asia?",
+    options:["Ganges","Mekong","Yangtze","Yellow River"],
+    answer:"Yangtze",
+    fact:"💡 Fun fact: The Yangtze is about 6,300 km long and is the longest river in China."
+  },
+  {
+    q:"Which planet has the largest volcano in the Solar System?",
+    options:["Earth","Venus","Mars","Jupiter"],
+    answer:"Mars",
+    fact:"💡 Fun fact: Mars is home to Olympus Mons, a giant volcano roughly 22 km high—almost three times the height of Mount Everest above sea level."
+  },
+  {
+    q:"Which programming language is famous for its 🐍 snake-related name?",
+    options:["Java","Python","Ruby","Swift"],
+    answer:"Python",
+    fact:"💡 Fun fact: Python is one of the world’s most popular programming languages and is widely used in AI, data science, web development and automation."
+  },
+  {
+    q:"Which country is home to the ancient city of Taxila?",
+    options:["India","Pakistan","Nepal","Afghanistan"],
+    answer:"Pakistan",
+    fact:"💡 Fun fact: Taxila is an ancient archaeological site in modern-day Pakistan and was an important center of learning in the ancient world."
+  },
+  {
+    q:"Which country is known as the “Land of the Rising Sun”?",
+    options:["China","Japan","South Korea","Thailand"],
+    answer:"Japan",
+    fact:"💡 Fun fact: Japan’s traditional name is associated with the rising sun, reflecting its position east of the Asian mainland."
+  }
+];
+
+let quiz=[], current=0, score=0, answered=false;
+
+function shuffle(arr){
+  return [...arr].sort(()=>Math.random()-0.5);
+}
+
+function startQuiz(){
+  quiz = shuffle(questions).map(item => ({
+    ...item,
+    options: shuffle(item.options)
+  }));
+  current=0; score=0; answered=false;
+  document.getElementById("quiz").style.display="block";
+  document.getElementById("result").style.display="none";
+  render();
+}
+
+function render(){
+  const item=quiz[current];
+  answered=false;
+
+  document.getElementById("questionNumber").textContent =
+    `Q${current+1}.`;
+  document.getElementById("question").textContent=item.q;
+
+  const progress=document.getElementById("progress");
+  progress.innerHTML="";
+  quiz.forEach((_,i)=>{
+    const d=document.createElement("div");
+    d.className="dot"+(i<current?" done":"");
+    progress.appendChild(d);
+  });
+
+  const options=document.getElementById("options");
+  options.innerHTML="";
+  item.options.forEach((text,index)=>{
+    const button=document.createElement("button");
+    button.className="option";
+    button.textContent=String.fromCharCode(65+index)+". "+text;
+    button.onclick=()=>selectAnswer(button,text);
+    options.appendChild(button);
+  });
+
+  document.getElementById("fact").className="fact";
+  document.getElementById("fact").innerHTML="";
+  document.getElementById("next").disabled=true;
+  document.getElementById("next").textContent =
+    current===quiz.length-1 ? "See my result →" : "Next question →";
+}
+
+function selectAnswer(button,text){
+  if(answered) return;
+  answered=true;
+
+  const item=quiz[current];
+  const buttons=[...document.querySelectorAll(".option")];
+
+  buttons.forEach(b=>{
+    const value=b.textContent.substring(3);
+    if(value===item.answer) b.classList.add("correct");
+  });
+
+  if(text===item.answer){
+    score++;
+  }else{
+    button.classList.add("wrong");
+  }
+
+  document.getElementById("fact").innerHTML =
+    (text===item.answer ? "🎀 Yes! " : "💭 Not quite. ") +
+    `<strong>Fun fact:</strong> ${item.fact.replace("💡 Fun fact: ","")}`;
+  document.getElementById("fact").className="fact show";
+  document.getElementById("next").disabled=false;
+}
+
+document.getElementById("next").onclick=()=>{
+  if(!answered) return;
+  current++;
+  if(current<quiz.length) render();
+  else showResult();
+};
+
+function showResult(){
+  document.getElementById("quiz").style.display="none";
+  document.getElementById("result").style.display="block";
+  document.getElementById("finalScore").textContent=`Your score: ${score} / ${quiz.length}`;
+}
+
+startQuiz();
+</script>
+</body>
+</html>
